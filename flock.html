@@ -1,0 +1,111 @@
+<!doctype html> 
+<html> 
+	<head> 
+		<title>mumuration</title> 
+		<meta charset="utf-8" /> 
+	</head> 
+	<body>
+		<div align="center">
+            <canvas id="c"></canvas>
+		</div> 
+		<script> 
+
+function Flock(size, dim) {
+    this.size = size;
+    this.dim = dim;
+    this.positions = Array(size*dim);
+    this.velocities = Array(size *dim);
+
+    return this;
+}
+
+Flock.prototype.reset = function(radius) {
+    for (var i=0; i<this.size; i++) {
+        for (var j=0; j < this.dim; j++) {
+            this.positions[i+j] = Math.random()*radius*2-radius;
+            this.velocities[i+j] = Math.random()*2-1;
+        }
+    }
+}
+
+Flock.prototype.get_pos = function(bird) {
+    return this.positions.slice(bird, bird+this.dim);
+}
+
+Flock.prototype.get_vel = function(bird) {
+    return this.velocities.slice(bird, bird+this.dim);
+}
+
+Flock.prototype.set_pos = function(bird,p) {
+    for (j=0; j<this.dim; j++) {
+        this.positions[bird+j] = p[j];
+    }
+}
+
+Flock.prototype.set_vel = function(bird,v) {
+    for (j=0; j<this.dim; j++) {
+        this.velocities[bird+j] = v[j];
+    }
+}
+
+Flock.prototype.get_neighbours = function(bird) {
+    var neighbours = []
+    for (var n=0; n<this.size; n++) {
+        neighbours.push(n)
+    }
+    return neighbours;
+}
+
+Flock.prototype.update_into = function(new_flock) {
+    for (var n=0; n<this.size; n++) {
+        var pos = this.get_pos(n);
+        var vel = this.get_vel(n);
+        for (var neighbour in this.get_neighbours(n)) {
+        }
+        for (var j=0; j<this.dim; j++) {
+            pos[j]+=vel[j];
+        }
+
+        new_flock.set_pos(n, pos);
+        new_flock.set_vel(n, vel);
+    }
+}
+Flock.prototype.render = function(canvas) {
+    var width = cnvs.width = window.innerWidth*0.95;
+    var height = cnvs.height = window.innerHeight*0.94;
+    ctx.fillStyle ='white';
+    ctx.fillRect(0,0,width, height);
+    ctx.fillStyle = 'black';
+    for (var n=0; n<this.size; n++) {
+        var p = this.get_pos(n);
+        var x = p[0]+width/2;
+        var y = p[1]+height/2;
+        ctx.fillRect(x,y,5,5);
+    }
+}
+
+var cnvs=document.getElementById('c');
+var ctx=cnvs.getContext("2d");
+
+var n = 3, dim = 2;
+var f1 = new Flock(n, dim);
+var f2 = new Flock(n, dim);
+
+f1.reset(n*5);
+f1.render(ctx);
+
+function paint() {
+    f1.update_into(f2)
+    f2.render(ctx)
+    f1=f2;
+    setTimeout(paint)
+}
+
+paint();
+
+setTimeout(paint)
+
+		</script> 
+	</body> 
+</html>
+
