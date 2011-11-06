@@ -10,11 +10,11 @@
 		</div> 
 		<script> 
 
-function Flock(size, dim) {
-    this.size = size;
-    this.dim = dim;
-    this.positions = Array(size*dim);
-    this.velocities = Array(size *dim);
+function Flock(config) {
+    this.size = config.size;
+    this.dim = config.dim;
+    this.positions = Array(config.size*config.dim);
+    this.velocities = Array(config.size *config.dim);
 
     return this;
 }
@@ -61,6 +61,12 @@ Flock.prototype.update_into = function(new_flock) {
         var pos = this.get_pos(n);
         var vel = this.get_vel(n);
         for (var neighbour in this.get_neighbours(n)) {
+            // cohesion
+                // move towards centre of mass of neighbours
+            // separation
+
+
+            //alignment
         }
         for (var j=0; j<this.dim; j++) {
             pos[j]+=vel[j];
@@ -70,40 +76,48 @@ Flock.prototype.update_into = function(new_flock) {
         new_flock.set_vel(n, vel);
     }
 }
-Flock.prototype.render = function(canvas) {
-    var width = cnvs.width = window.innerWidth*0.95;
-    var height = cnvs.height = window.innerHeight*0.94;
-    ctx.fillStyle ='white';
-    ctx.fillRect(0,0,width, height);
-    ctx.fillStyle = 'black';
+Flock.prototype.render = function(ctx, width, height,r) {
     for (var n=0; n<this.size; n++) {
         var p = this.get_pos(n);
         var x = p[0]+width/2;
         var y = p[1]+height/2;
-        ctx.fillRect(x,y,5,5);
+        ctx.fillRect(x,y,r,r);
     }
 }
 
-var cnvs=document.getElementById('c');
-var ctx=cnvs.getContext("2d");
+var canvas=document.getElementById('c');
+var ctx=canvas.getContext("2d");
 
-var n = 3, dim = 2;
-var f1 = new Flock(n, dim);
-var f2 = new Flock(n, dim);
+window.onresize = function() {
+    canvas.width = window.innerWidth*0.95;
+    canvas.height = window.innerHeight*0.94;
+}
 
-f1.reset(n*5);
-f1.render(ctx);
+window.onresize()
+
+var config = {
+    size: 10,
+    dim: 2,
+    bird_radius: 5,
+}
+var f1 = new Flock(config);
+var f2 = new Flock(config);
+
+f1.reset(config.size*5);
 
 function paint() {
+    var w=canvas.width,h=canvas.height;
     f1.update_into(f2)
-    f2.render(ctx)
+    ctx.clearRect(0,0, w,h)
+    ctx.fillStyle= 'black'
+    f2.render(ctx,w,h, 3)
     f1=f2;
-    setTimeout(paint)
 }
+
 
 paint();
 
-setTimeout(paint)
+setInterval(paint,16)
 
 		</script> 
 	</body> 
