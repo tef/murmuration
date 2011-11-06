@@ -19,37 +19,46 @@ function Flock(config) {
     this.alignment_radius=config.alignment_radius;
     this.cohesion_radius=config.cohesion_radius;
     this.separation_radius=config.separation_radius;
-    console.log(config, this)
+    this.max_vec=config.max_velocity;
+    //console.log(config, this)
 
     return this;
 }
 
 Flock.prototype.reset = function(radius) {
-    for (var i=0; i<this.size; i++) {
+    for (var i=0; i<this.size*this.dim; i+=this.dim) {
         for (var j=0; j < this.dim; j++) {
             this.positions[i+j] = Math.random()*radius*2-radius;
             this.velocities[i+j] = Math.random()*2-1;
         }
     }
+    for (var i=0;i<this.size;i++) {
+        //console.log(this.get_pos(i));
+        //console.log(this.get_vel(i));
+    }
 }
 
 Flock.prototype.get_pos = function(bird) {
-    return this.positions.slice(bird, bird+this.dim);
+    var off = bird*this.dim;
+    return this.positions.slice(off, off+this.dim);
 }
 
 Flock.prototype.get_vel = function(bird) {
-    return this.velocities.slice(bird, bird+this.dim);
+    var off = bird*this.dim;
+    return this.velocities.slice(off, off+this.dim);
 }
 
 Flock.prototype.set_pos = function(bird,p) {
+    var off = bird*this.dim;
     for (j=0; j<this.dim; j++) {
-        this.positions[bird+j] = p[j];
+        this.positions[off+j] = p[j];
     }
 }
 
 Flock.prototype.set_vel = function(bird,v) {
+    var off = bird*this.dim;
     for (j=0; j<this.dim; j++) {
-        this.velocities[bird+j] = v[j];
+        this.velocities[off+j] = v[j];
     }
 }
 
@@ -59,7 +68,7 @@ Flock.prototype.get_neighbours = function(bird) {
         if (n!=bird) {
 
             var d = this.get_distance(bird, n);
-            var c = [n,d];
+            var c = [n,d,];
             neighbours.push(c);
         }
     }
@@ -77,41 +86,57 @@ Flock.prototype.get_distance = function(bird, n) {
 }
 
 Flock.prototype.update_into = function(new_flock) {
-    var social = [];
     for (var bird=0; bird<this.size; bird++) {
         var pos = this.get_pos(bird);
         var vel = this.get_vel(bird);
 
         // vec is aggregate velocity
-        for (var i=0;i<this.dim;i++){social[i]=0}
 
         var nearby=0;
         var neighbours = this.get_neighbours(bird)
+        var flock_vel=[0,0];
+        var social=[0,0]
+        //for (var i=0;i<this.dim;i++){social[i]=10}
         for (var i =0; i<neighbours.length; i++) {
-            var neighbour=neighbours[i], n=neighbours[0], d=neighbour[1];
+            var neighbour=neighbours[i], n=neighbour[0], d=neighbour[1];
             nearby++;
+            //console.log('neighbour of '+bird+', '+n+', is '+d);
+            //console.log('social', social)
             
             if (d < this.separation_radius) {
                 // too close, fly away
-                console.log('close', d, bird, n)
+                var p = this.get_pos(n);
+                console.log('sep',neighbour, n, d, p);
+                for (var j=0; j<this.dim; j++) {
+                //    social[j]-=(p[j]-pos[j])/100
+                }
+                console.log(social);
 
             } else if (d < this.alignment_radius) {
                 // try to match velocity
                 // find difference between average 
-                console.log('align', d, bird, n)
+                var v = this.get_vel(n);
+                //console.log('align',neighbour, n, d, v);
+                for (var j=0; j<this.dim; j++) {
+            //        social[j]+=(v[j]-vel[j])/self.max_vel;
+                }
 
             } else if (d > this.cohesion_radius)  {
                 // try to match position
                 // change velocity towards other bird
-                console.log('cohesion', d, bird, n)
-            } else {
-                console.log(n,d);
+                var p = this.get_pos(n);
+                //console.log('cohesion',neighbour, n, d, p);
+                for (var j=0; j<this.dim; j++) {
+            //        social[j]+=(p[j]-pos[j])/this.alignment_radius;
+                }
             }
 
         }
         for (var j=0; j<this.dim; j++) {
-            vel[j]=vel[j]+social[j]/nearby;
-            pos[j]+=vel[j]+Math.random();
+            vel[j]+=flock_vel[j]/nearby+Math.random()
+            if (vel[j] > this.max_vec) { vel[j] = this.max_vec }
+            if (vel[j] < -this.max_vec) { vel[j] = -this.max_vec }
+            pos[j]+=vel[j]
         }
 
         new_flock.set_pos(bird, pos);
@@ -138,12 +163,13 @@ window.onresize = function() {
 window.onresize()
 
 var config = {
-    size: 2,
+    size: 40,
     dim: 2,
     bird_radius: 5,
-    separation_radius: 25,
-    alignment_radius: 50,
-    cohesion_radius: 100,
+    separation_radius: 50,
+    alignment_radius: 100,
+    cohesion_radius: 150,
+    max_velocity:1,
 }
 var f1 = new Flock(config);
 var f2 = new Flock(config);
@@ -153,7 +179,7 @@ f1.reset(config.size*5);
 a=0
 function paint() {
     a++;
-    if (a>2) {return}
+    if (a>100) {return}
     var w=canvas.width,h=canvas.height;
     f1.update_into(f2)
     ctx.clearRect(0,0, w,h)
